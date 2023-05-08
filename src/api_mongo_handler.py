@@ -33,6 +33,7 @@ class ApiMongoHandler():
 
     def get_all_file_ids(self) -> List[str]:
         files = self.fs.find()
+        # seems like I'm accessing a private field
         return [f._id for f in files]
 
     def get_file_by_id(self, file_id: str) -> Tuple[str, bytes]:
