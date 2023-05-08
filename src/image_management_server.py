@@ -1,24 +1,70 @@
+# quickfix includes
+import sys  # noqa
+from os import path  # noqa
+
+current_directory = path.dirname(path.abspath(__file__))  # noqa
+sys.path.append(current_directory)  # noqa
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Tuple
 
-from .api_mongo_handler import ApiMongoHandler
+import uvicorn
 
-class ImageManagementServer:
-    def __init__(self, connection_string: str, database: str, collection: str):
-        # get(/)        get all images
-        # get(/id)      get specific image ??
-        # delete(/id)   delete specific image
-        # update(/id)   update specific image
-        self.app = FastAPI()
+from api_mongo_handler import ApiMongoHandler
 
-        self.api_mongo_handler = ApiMongoHandler(connection_string, database, collection)
 
-        self.setup_routs()
+origins = [
+    # "http://localhost:3000/",
+    # "localhost:3000"
+    '*'  # use wilcard for now and fix later
+]
 
-    def setup_routs(self):
-        @self.app.get('/', response_model=List[str])
-        async def get_all_ids(self):
-            return self.api_mongo_handler.get_all_file_ids()
-        
-        @self.app.get('/id', response_model=[str, bytes])
 
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+connection_string = sys.argv[1]
+database = sys.argv[2]
+collection = sys.argv[3]
+api_mongo_handler = ApiMongoHandler(
+    connection_string, database, collection)
+
+
+@app.get('/images', response_model=List[str])
+async def get_all_image_ids():
+    response = api_mongo_handler.get_all_file_ids()
+    print(response)
+    return response
+
+
+@app.get('/test', response_model=List[str])
+async def test():
+    result = "{'test': ['test', 'bla']}"
+    return ['test', 'test']
+
+
+@app.get('/images/{id}', response_model=Tuple[str, str])
+async def get_image_by_id(id: str):
+    print(id)
+    response = api_mongo_handler.get_file_by_id(id)
+    print(response)
+    return response
+
+
+@app.put('/images/{id}')
+async def edit_image(id: str, filename: str, data: bytes):
+    pass
+
+
+@app.put('/images/{id}')
+async def edit_image(id: str, filename: str, data: bytes):
+    pass
+
+uvicorn.run(app, host="0.0.0.0", port=8000)

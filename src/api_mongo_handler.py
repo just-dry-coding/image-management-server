@@ -34,11 +34,13 @@ class ApiMongoHandler():
     def get_all_file_ids(self) -> List[str]:
         files = self.fs.find()
         # seems like I'm accessing a private field
-        return [f._id for f in files]
+        return [str(f._id) for f in files]
 
-    def get_file_by_id(self, file_id: str) -> Tuple[str, bytes]:
+    def get_file_by_id(self, file_id: str) -> Tuple[str, str]:
+        print(file_id)
         file = self.fs.get(file_id)
-        return (file.filename, file.read())
+        print(file)
+        return (file.filename, str(file.read()))
 
     def _check_connection(self, on_connect):
         try:
@@ -49,12 +51,12 @@ class ApiMongoHandler():
 
 
 def main(connection_string, database, collection):
-    mongo_handler = APIMongoHandler(connection_string, database, collection)
+    mongo_handler = ApiMongoHandler(connection_string, database, collection)
     image_ids = mongo_handler.get_all_image_ids(collection)
     for id in image_ids:
-        file = mongo_handler.get_file_by_id(id)
-        with open(file.filename, "wb") as f:
-            f.write(file.content)
+        [filename, data] = mongo_handler.get_file_by_id(id)
+        with open(filename, "wb") as f:
+            f.write(data)
 
 
 if __name__ == '__main__':
