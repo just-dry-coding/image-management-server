@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 
 from gridfs import GridFS
 
@@ -19,7 +20,7 @@ def _on_connect_default(connected, error_msg):
 ConnectCallback = NewType('ConnectCallback', Callable[[bool, str], None])
 
 
-class MongoHandler():
+class ApiMongoHandler():
     """
         todo: docu write interface and methods
     """
@@ -32,10 +33,10 @@ class MongoHandler():
 
     def get_all_file_ids(self) -> List[str]:
         files = self.fs.find()
-        return [f.id() for f in files]
+        return [f._id for f in files]
 
     def get_file_by_id(self, file_id: str) -> Tuple[str, bytes]:
-        file = fs.get(file_id)
+        file = self.fs.get(file_id)
         return (file.filename, file.read())
 
     def _check_connection(self, on_connect):
@@ -47,7 +48,7 @@ class MongoHandler():
 
 
 def main(connection_string, database, collection):
-    mongo_handler = MongoHandler(connection_string, database, collection)
+    mongo_handler = APIMongoHandler(connection_string, database, collection)
     image_ids = mongo_handler.get_all_image_ids(collection)
     for id in image_ids:
         file = mongo_handler.get_file_by_id(id)
