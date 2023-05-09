@@ -1,7 +1,8 @@
-from unittest import TestCase
 import pytest
 
 from src.api_mongo_handler import ApiMongoHandler
+import bson
+from gridfs.errors import NoFile
 
 from os import environ
 
@@ -40,6 +41,19 @@ def test_get_all_file_ids(mongo_handler):
 
 @pytest.mark.usefixtures("mongo_handler")
 def test_get_file_by_id(mongo_handler):
-    images = mongo_handler.get_all_file_ids()
-    [filename, _] = mongo_handler.get_file_by_id(images[0])
+    image_ids = mongo_handler.get_all_file_ids()
+    [filename, _] = mongo_handler.get_file_by_id(image_ids[0])
     assert filename == "image1.jpg"
+
+
+@pytest.mark.usefixtures("mongo_handler")
+def test_get_file_by_invalid_id(mongo_handler):
+    with pytest.raises(bson.errors.InvalidId):
+        [filename, _] = mongo_handler.get_file_by_id('some_invalid_id+#')
+
+
+@pytest.mark.usefixtures("mongo_handler")
+def test_get_file_where_image_not_found(mongo_handler):
+    with pytest.raises(NoFile):
+        randomId = bson.ObjectId()
+        [filename, _] = mongo_handler.get_file_by_id(randomId)

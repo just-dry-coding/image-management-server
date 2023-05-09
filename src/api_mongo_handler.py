@@ -2,9 +2,9 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 from gridfs import GridFS
+import bson
 
 
-from os import path
 import sys
 
 from typing import NewType, Callable, List, Tuple
@@ -37,10 +37,12 @@ class ApiMongoHandler():
         return [str(f._id) for f in files]
 
     def get_file_by_id(self, file_id: str) -> Tuple[str, str]:
-        print(file_id)
-        file = self.fs.get(file_id)
-        print(file)
-        return (file.filename, str(file.read()))
+        """
+            throws bson.error.InvalidId for invalid file_id
+            throws gridfs.errors.NoFile for file not found
+        """
+        file = self.fs.get(bson.ObjectId(file_id))
+        return (file.filename, file.read())
 
     def _check_connection(self, on_connect):
         try:
