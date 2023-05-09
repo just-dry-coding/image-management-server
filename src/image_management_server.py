@@ -7,6 +7,7 @@ sys.path.append(current_directory)  # noqa
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from typing import List, Tuple
 
 import uvicorn
@@ -15,9 +16,8 @@ from api_mongo_handler import ApiMongoHandler
 
 
 origins = [
-    # "http://localhost:3000/",
-    # "localhost:3000"
-    '*'  # use wilcard for now and fix later
+    "http://localhost:3000/",
+    "localhost:3000"
 ]
 
 
@@ -26,7 +26,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -46,15 +46,15 @@ async def get_all_image_ids():
 
 @app.get('/test', response_model=List[str])
 async def test():
-    result = "{'test': ['test', 'bla']}"
     return ['test', 'test']
 
 
 @app.get('/images/{id}', response_model=Tuple[str, str])
 async def get_image_by_id(id: str):
-    print(id)
-    response = api_mongo_handler.get_file_by_id(id)
-    print(response)
+    [filename, file] = api_mongo_handler.get_file_by_id(id)
+    content_type = "application/octet-stream"
+    response = StreamingResponse(iter([file]), media_type=content_type)
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 

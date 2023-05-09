@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 from gridfs import GridFS
+from gridfs.errors import NoFile
 import bson
 
 
@@ -43,6 +44,19 @@ class ApiMongoHandler():
         """
         file = self.fs.get(bson.ObjectId(file_id))
         return (file.filename, file.read())
+
+    def update_file_by_id(self, file_id: str, filename: str, file: str) -> None:
+        """
+            throws bson.error.InvalidId for invalid file_id
+            throws gridfs.errors.NoFile for file not found
+        """
+        file_id_bson = bson.ObjectId(file_id)
+        if not self.fs.exists(file_id_bson):
+            raise NoFile()
+        # todo: not a safe way of updating -> need abondon gridfs to change
+        self.fs.delete(file_id=file_id_bson)
+        self.fs.put(
+            file.encode('utf-8'), _id=file_id_bson, filename=filename)
 
     def _check_connection(self, on_connect):
         try:
