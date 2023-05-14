@@ -50,7 +50,6 @@ async def get_all_image_ids():
 
 @app.get('/images/{id}', response_model=Tuple[str, str])
 async def get_image_by_id(id: str):
-    print(id)
     [filename, file] = api_mongo_handler.get_file_by_id(id)
     content_type = "application/octet-stream"
     response = StreamingResponse(iter([file]), media_type=content_type)
