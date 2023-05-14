@@ -71,4 +71,10 @@ async def edit_image(id: str):
     api_mongo_handler.delete_file_by_id(id)
     return {"message": "Image deleted successfully"}
 
-uvicorn.run(app, host="0.0.0.0", port=8000)
+
+def main():
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+if __name__ == '__main__':
+    main()
