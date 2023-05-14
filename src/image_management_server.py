@@ -5,7 +5,7 @@ from os import path  # noqa
 current_directory = path.dirname(path.abspath(__file__))  # noqa
 sys.path.append(current_directory)  # noqa
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from typing import List, Tuple
@@ -24,9 +24,9 @@ origins = [
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # todo: set proper origins
     allow_credentials=True,
-    allow_methods=["GET", "PUT", "DELETE"],
+    allow_methods=["GET", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -37,16 +37,16 @@ api_mongo_handler = ApiMongoHandler(
     connection_string, database, collection)
 
 
+@app.options("/images/{id}")
+async def options_images(id: str):
+    return {"Allow": "OPTIONS, PUT, GET, DELETE"}
+
+
 @app.get('/images', response_model=List[str])
 async def get_all_image_ids():
     response = api_mongo_handler.get_all_file_ids()
     print(response)
     return response
-
-
-@app.get('/test', response_model=List[str])
-async def test():
-    return ['test', 'test']
 
 
 @app.get('/images/{id}', response_model=Tuple[str, str])
@@ -59,12 +59,16 @@ async def get_image_by_id(id: str):
 
 
 @app.put('/images/{id}')
-async def edit_image(id: str, filename: str, data: bytes):
-    pass
+async def edit_image(id: str,  file: UploadFile = File(...)):
+    filename = file.filename
+    file_data = await file.read()
+    api_mongo_handler.update_file_by_id(id, filename, file_data)
+    return {"message": "Image edited successfully"}
 
 
-@app.put('/images/{id}')
-async def edit_image(id: str, filename: str, data: bytes):
-    pass
+@app.delete('/images/{id}')
+async def edit_image(id: str):
+    api_mongo_handler.delete_file_by_id(id)
+    return {"message": "Image deleted successfully"}
 
 uvicorn.run(app, host="0.0.0.0", port=8000)
