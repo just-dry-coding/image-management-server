@@ -4,8 +4,7 @@ from src.api_mongo_handler import ApiMongoHandler
 import bson
 from gridfs.errors import NoFile
 
-from os import environ
-
+from os import environ, path
 
 _connection_string = environ.get('TEST_DATABASE_CONNECTION_STRING')
 
@@ -43,10 +42,38 @@ def test_get_all_file_ids(mongo_handler):
 def test_get_file_by_id(mongo_handler):
     image_ids = mongo_handler.get_all_file_ids()
     [filename, _] = mongo_handler.get_file_by_id(image_ids[0])
-    # debug
-    with open(filename, 'wb') as file:
-        file.write(_)
-    assert filename == "image1.jpg"
+    assert filename == 'image1.jpg'
+
+
+@pytest.mark.usefixtures("mongo_handler")
+def test_update_file_by_id(mongo_handler):
+    image_ids = mongo_handler.get_all_file_ids()
+    assert len(image_ids) == 1
+    current_dir = path.dirname(path.abspath(__file__))
+    _filename = 'image2.jpg'
+    with open(path.join(current_dir, 'test_images', _filename), 'rb') as file:
+        mongo_handler.update_file_by_id(image_ids[0], _filename, file)
+    [filename, _] = mongo_handler.get_file_by_id(image_ids[0])
+    assert filename == "image2.jpg"
+    # clean up
+    _filename = 'image1.jpg'
+    with open(path.join(current_dir, 'test_images', _filename), 'rb') as file:
+        mongo_handler.update_file_by_id(image_ids[0], _filename, file)
+
+
+@pytest.mark.usefixtures("mongo_handler")
+def test_delete_file_by_id(mongo_handler):
+    image_ids = mongo_handler.get_all_file_ids()
+    assert (len(image_ids) == 1)
+    mongo_handler.delete_file_by_id(image_ids[0])
+    image_ids_after = mongo_handler.get_all_file_ids()
+    assert (len(image_ids_after) == 0)
+    # clean up
+    current_dir = path.dirname(path.abspath(__file__))
+    filename = 'image1.jpg'
+    with open(path.join(current_dir, 'test_images', filename), 'rb') as file:
+        mongo_handler._fs.put(file, _id=bson.ObjectId(
+            image_ids[0]), filename=filename)
 
 
 @pytest.mark.usefixtures("mongo_handler")

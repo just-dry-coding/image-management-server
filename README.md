@@ -13,3 +13,14 @@ An image managment backend server that allows to perform (C)RUD operations on im
 
 ## Run
 1. run `python ./src/image_management_server.py <mongo_connection_string> <database> <collection>
+
+## improvements
+
+# api server
+- do error and exception handling
+- find better way to encapsulate api server with database
+# tests
+- setup and teardown method for consistent database state
+- use database mock for testing and dont rely on assumed database state
+- find proper way to setup api server and db without hack
+  
