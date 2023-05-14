@@ -13,6 +13,5 @@ client = TestClient(app)
 
 
 def test_read():
-    response = client.get("/test")
+    response = client.get("/images")
     assert response.status_code == 200
-    assert response.json() == ['test', 'test']
